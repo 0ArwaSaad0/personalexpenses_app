@@ -6,7 +6,9 @@ import 'package:traineeapp/widget/chart_barse.dart';
 class Charts extends StatelessWidget {
   final List<Transaction> recentTransactions;
 
-  Charts(this.recentTransactions);
+  Charts(this.recentTransactions){
+    print('Constructor Chart');
+  }
 
   List<Map<String, Object>> get groupedTransactionValues {
     return List.generate(7, (index) {
@@ -39,6 +41,7 @@ print(DateFormat.E().format(weekDay));
 
   @override
   Widget build(BuildContext context) {
+    print('build() Chart' );
     print(groupedTransactionValues);
     return Card(
         elevation: 6,

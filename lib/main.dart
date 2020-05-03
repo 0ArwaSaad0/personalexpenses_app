@@ -16,6 +16,7 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    print('build() MyHomePageState');
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Personal Expenses',
@@ -46,7 +47,7 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   /* final titleController = TextEditingController();
   final amountController = TextEditingController();
 */
@@ -65,6 +66,28 @@ class _MyHomePageState extends State<MyHomePage> {
     ),*/
   ];
   bool _showCart = false;
+
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addObserver(this);
+    super.initState();
+  }
+
+  didChangeAppLifeCycleState(AppLifecycleState state){
+print(state);
+  }
+
+
+  
+  
+  
+  @override
+  dispose(){
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
   List<Transaction> get _recentTransicatopn {
     return _userTransactions.where((tx) {
       return tx.dateTime.isAfter(DateTime.now().subtract(
@@ -90,7 +113,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _startAddNewTransiction(BuildContext ctx) {
     showModalBottomSheet(
         context: ctx,
-        builder: (_) {
+        builder: (context) {
           return GestureDetector(
             onTap: () {},
             child: NewTransaction(_addNewTransaction),
@@ -105,6 +128,45 @@ class _MyHomePageState extends State<MyHomePage> {
         return tx.id == id;
       });
     });
+  }
+
+ List <Widget> _buildLandScapeContent(MediaQueryData mediaQuery, AppBar appBar,Widget txListWidget ) {
+    return[ Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Text('Show Charts'),
+        Switch.adaptive(
+          value: _showCart,
+          onChanged: (val) {
+   setState(() {
+   _showCart = val;
+   });
+   },
+   ),
+   ],
+    ),_showCart
+   ? Container(
+   height: (mediaQuery.size.height -
+   appBar.preferredSize.height -
+   mediaQuery.padding.top) *
+   0.7,
+   child: Charts(_recentTransicatopn),  )
+       :txListWidget];
+
+ }
+
+  List<Widget> _buildProtaiteContent(
+      MediaQueryData mediaQuery, AppBar appBar, Widget txListWidget) {
+    return [
+      Container(
+        height: (mediaQuery.size.height -
+                appBar.preferredSize.height -
+                mediaQuery.padding.top) *
+            0.3,
+        child: Charts(_recentTransicatopn),
+      ),
+      txListWidget
+    ];
   }
 
   @override
@@ -133,38 +195,18 @@ class _MyHomePageState extends State<MyHomePage> {
         // mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          if (isLandScape)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Text('Show Charts'),
-                Switch.adaptive(
-                  value: _showCart,
-                  onChanged: (val) {
-                    setState(() {
-                      _showCart = val;
-                    });
-                  },
-                ),
-              ],
-            ),
+          if (isLandScape) ..._buildLandScapeContent(mediaQuery,appBar,txListWidget),
           if (!isLandScape)
-            Container(
-              height: (mediaQuery.size.height -
-                      appBar.preferredSize.height -
-                      mediaQuery.padding.top) *
-                  0.3,
-              child: Charts(_recentTransicatopn),
-            ),
-          if (!isLandScape) txListWidget,
-          if (isLandScape)
-            _showCart
-                ? Container(
-                    height: (mediaQuery.size.height -
-                            appBar.preferredSize.height -
-                            mediaQuery.padding.top) *
-                        0.7,
-                    child: Charts(_recentTransicatopn),
+           ... _buildProtaiteContent(
+                mediaQuery,
+                appBar,
+                txListWidget),
+
+        ]
+    ),
+    )
+    );
+
                     /*Container(
               width: double.infinity,
               child: Card(
@@ -173,11 +215,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 elevation: 5,
               ),
             ),*/
-                  )
-                : txListWidget
-        ],
-      ),
-    ));
+
+
+
     return Platform.isIOS
         ? CupertinoPageScaffold(
             child: pageBody,
